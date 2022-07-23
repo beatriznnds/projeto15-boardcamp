@@ -2,22 +2,17 @@ import connection from "../database.js";
 
 export async function getGames (req, res) {
     const { name } = req.query;
-    if (name) {
-        try {
+    try {
+        if (name) {
             await connection.query(`SELECT games.*, categories.name as categoryName FROM games JOIN categories ON games."categoryId" = categories.id`);
             const { rows: searchedGames } = await connection.query(`SELECT * FROM games WHERE upper(name) LIKE upper($1)`, [(`${name}%`)]);
             res.send(searchedGames);
-        } catch (e) {
-            res.sendStatus(500);
         }
-    } else {
-        try {
-            const { rows: allGames } = await connection.query(`SELECT games.*, categories.name as categoryName FROM games JOIN categories ON games."categoryId" = categories.id`)
-            res.send(allGames);
-        } catch (e) {
-            res.sendStatus(500)
-        }
-    }
+        const { rows: allGames } = await connection.query(`SELECT games.*, categories.name as categoryName FROM games JOIN categories ON games."categoryId" = categories.id`)
+        res.send(allGames);
+    } catch (e) {
+        res.sendStatus(500);
+    }    
 }
 
 export async function addNewGame (req, res) {
