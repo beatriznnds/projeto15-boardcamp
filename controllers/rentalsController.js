@@ -3,61 +3,38 @@ import dayjs from "dayjs";
 
 export async function getRentals(req, res) {
     const { customerId, gameId } = req.query;
-
+    let rentals;
     try {
-        if (customerId && gameId){
-            const { rows: rentalsByCustomerAndGameId } = await connection.query(`
-                SELECT rentals.*, games.name as "gameName", customers.name as "customerName", categories.name as "categoryName", categories.id as "categoryId"
-                FROM rentals
-                JOIN customers
-                ON customers."id" = rentals."customerId"
-                JOIN games
-                ON games."id" = rentals."gameId"
-                JOIN categories
-                ON categories."id" = games."categoryId"
-                WHERE custormerId = $1
-                AND gameId = $2
-            `, [customerId, gameId]);
-            return res.send(rentalsByCustomerAndGameId);
-        } else if (customerId){
-            const {rows: rentalsByCustomerId} = await connection.query(`
-                SELECT rentals.*, games.name as "gameName", customers.name as "customerName", categories.name as "categoryName", categories.id as "categoryId"
-                FROM rentals
-                JOIN customers
-                ON customers."id" = rentals."customerId"
-                JOIN games
-                ON games."id" = rentals."gameId"
-                JOIN categories
-                ON categories."id" = games."categoryId"
-                WHERE custormerId = $1
-            `, [customerId]);
-            return res.send(rentalsByCustomerId);
-        } else if (gameId){
-            const { rows: rentalsByGameId } = await connection.query(`
-                SELECT rentals.*, games.name as "gameName", customers.name as "customerName", categories.name as "categoryName", categories.id as "categoryId"
-                FROM rentals
-                JOIN customers
-                ON customers."id" = rentals."customerId"
-                JOIN games
-                ON games."id" = rentals."gameId"
-                JOIN categories
-                ON categories."id" = games."categoryId"
-                WHERE gameId = $1
-            `, [gameId]);
-            return res.send(rentalsByGameId);
-        } else {
-            const { rows: allRentals } = await connection.query(`
-                SELECT rentals.*, customers.name as "customersName", games.name as "gameName", games."categoryId",
-                categories.name as "categoryName"
-                FROM rentals
-                LEFT JOIN customers ON customers.id = rentals."customerId" 
-                LEFT JOIN games ON games.id = rentals."gameId" 
-                LEFT JOIN categories ON categories.id = games."categoryId"
-            `);
-            console.log(allRentals)
-            return res.send(allRentals);
+        if (!customerId && !gameId) {
+            rentals = await connection.query(`SELECT rentals.*, json_build_object('id', customers.id, 'name', customers.name) AS customer, json_build_object('id', games.id, 'name', games.name, 'categoryName', games.\"categoryId\", 'categoryId', categories.name) AS game FROM rentals
+            JOIN customers ON customers.id = \"customerId\"
+            JOIN games ON games.id = \"gameId\"
+            JOIN categories ON \"categoryId\" = categories.id`);
+        }   
+        if (customerId) {
+            rentals = await connection.query(`SELECT rentals.*, json_build_object('id', customers.id, 'name', customers.name) AS customer, json_build_object('id', games.id, 'name', games.name, 'categoryName', games.\"categoryId\", 'categoryId', categories.name) AS game FROM rentals
+            JOIN customers ON customers.id = \"customerId\"
+            JOIN games ON games.id = \"gameId\"
+            JOIN categories ON \"categoryId\" = categories.id WHERE customers.id = $1`, [customerId]);
+        } 
+        if (gameId) {
+            rentals = await connection.query(`SELECT rentals.*, json_build_object('id', customers.id, 'name', customers.name) AS customer, json_build_object('id', games.id, 'name', games.name, 'categoryName', games.\"categoryId\", 'categoryId', categories.name) AS game FROM rentals
+            JOIN customers ON customers.id = \"customerId\"
+            JOIN games ON games.id = \"gameId\"
+            JOIN categories ON \"categoryId\" = categories.id WHERE games.id = $1`, [gameId]);
+        }    
+        if (customerId && gameId) {
+            rentals = await connection.query(`SELECT rentals.*, json_build_object('id', customers.id, 'name', customers.name) AS customer, json_build_object('id', games.id, 'name', games.name, 'categoryName', games.\"categoryId\", 'categoryId', categories.name) AS game FROM rentals
+            JOIN customers ON customers.id = \"customerId\"
+            JOIN games ON games.id = \"gameId\"
+            JOIN categories ON \"categoryId\" = categories.id 
+            WHERE customers.id = $1 
+            AND games.id = $2`, [customerId, gameId])
         }
+        const rowRentals = rentals.rows;
+        res.send(rowRentals)
     } catch (e) {
+        console.log(e)
         res.sendStatus(500);
     }
 }

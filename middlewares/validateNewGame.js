@@ -5,6 +5,7 @@ export async function validateNewGame (req, res, next) {
     const { name, image, stockTotal, categoryId, pricePerDay } = req.body;
     const { error } = newGameSchema.validate({name, image, stockTotal, pricePerDay});
     if (error) {
+        console.log(error)
         return res.sendStatus(400);
     }
     try {

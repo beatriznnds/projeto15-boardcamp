@@ -17,7 +17,7 @@ export async function getCustomers (req, res) {
 export async function getCustomerById (req, res) {
     const { id } = req.params;
     try {
-        const { rows: searchedCustomer } = await connection.query(`SELECT * FROM customeres WHERE id = $1`, [id]);
+        const { rows: searchedCustomer } = await connection.query(`SELECT * FROM customers WHERE id = $1`, [id]);
         res.send(searchedCustomer);
     } catch (e) {
         res.send('').status(500);
