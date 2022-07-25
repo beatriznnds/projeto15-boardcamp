@@ -54,15 +54,15 @@ export async function postNewRental (req, res) {
 
 export async function returnRental (req, res) {
     const { id } = req.params;
-    const returnDate = dayjs().format('YYYY-MM-DD');
+    let returnDate = dayjs().format('YYYY-MM-DD');
     try {
         const { rows: rental } = await connection.query(`SELECT rentals.*, games."pricePerDay" AS "pricePerDay"
             FROM rentals
             JOIN games
             ON games."id" = rentals."gameId"
             WHERE rentals."id" = $1`, [id]);
-        const delay = dayjs().diff(rental[0].rentDate, 'days');
-        const delayFee = null;
+        let delay = dayjs().diff(rental[0].rentDate, 'days');
+        let delayFee = null;
         if (delay > 0) {
             delayFee = parseInt(delay) * rental[0].pricePerDay
         }
